@@ -8,13 +8,13 @@ from itertools import chain
 # 1. Structure of Arrays (SoA): Parallel lists sorted alphabetically by category
 categories = ["Food Bank", "Housing", "Medical"]
 
-local_names = [
+resource_names = [
     ["Downtown Pantry", "Community Kitchen", "Westside Food Hub"],
     ["Hope Shelter", "City Transitional"],
     ["Free Clinic A", "Urgent Care Center"]
 ]
 
-local_distances = [
+resource_distances = [
     [1.2, 0.4, 2.5],
     [3.1, 2.8],
     [0.8, 0.3]
@@ -28,14 +28,14 @@ statewide_fallbacks = [
 
 
 # 2. Binary Search: Worst-case O(log n) category lookup
-def binary_search_category(cat_list, target):
+def binary_search_category(category_list, target):
     """Locates the index of a target category in a sorted list."""
-    low, high = 0, len(cat_list) - 1
+    low, high = 0, len(category_list) - 1
     while low <= high:
         mid = (low + high) // 2
-        if cat_list[mid] == target:
+        if category_list[mid] == target:
             return mid
-        elif cat_list[mid] < target:
+        elif category_list[mid] < target:
             low = mid + 1
         else:
             high = mid - 1
@@ -43,47 +43,47 @@ def binary_search_category(cat_list, target):
 
 
 # 3. Phase 2 Upgrade: Heapsort + Bucket Sort
-def max_heapify(arr, n, i):
+def max_heapify(resource_tuples, n, i):
     """Maintains the max-heap property for paired tuples (distance, name)."""
     largest = i
     left = 2 * i + 1
     right = 2 * i + 2
 
     # Compare distances (index 0); ties break deterministically by name (index 1)
-    if left < n and arr[left] > arr[largest]:
+    if left < n and resource_tuples[left] > resource_tuples[largest]:
         largest = left
-    if right < n and arr[right] > arr[largest]:
+    if right < n and resource_tuples[right] > resource_tuples[largest]:
         largest = right
 
     if largest != i:
-        arr[i], arr[largest] = arr[largest], arr[i]
-        max_heapify(arr, n, largest)
+        resource_tuples[i], resource_tuples[largest] = resource_tuples[largest], resource_tuples[i]
+        max_heapify(resource_tuples, n, largest)
 
 
-def heapsort_resources(arr):
+def heapsort_resources(resource_tuples):
     """Sorts resource tuples in place using O(1) auxiliary memory."""
-    n = len(arr)
+    n = len(resource_tuples)
     for i in range(n // 2 - 1, -1, -1):
-        max_heapify(arr, n, i)
+        max_heapify(resource_tuples, n, i)
 
     for i in range(n - 1, 0, -1):
-        arr[i], arr[0] = arr[0], arr[i]
-        max_heapify(arr, i, 0)
-    return arr
+        resource_tuples[i], resource_tuples[0] = resource_tuples[0], resource_tuples[i]
+        max_heapify(resource_tuples, i, 0)
+    return resource_tuples
 
 
-def bucket_sort_resources(arr, max_radius):
+def bucket_sort_resources(resource_tuples, max_radius):
     """Groups resources into spatial buckets and sorts each bucket with Heapsort."""
     if max_radius <= 0:
         raise ValueError("Invalid max_radius: must be greater than 0 to avoid division by zero.")
 
-    n = len(arr)
+    n = len(resource_tuples)
     if n == 0:
-        return arr
+        return resource_tuples
 
     buckets = [[] for _ in range(n)]
 
-    for item in arr:
+    for item in resource_tuples:
         distance = item[0]
         if distance < 0:
             raise ValueError(f"GPS calculation error: negative distance ({distance} mi) detected.")
@@ -109,27 +109,27 @@ def find_walkable_resources(user_categories, max_radius=1.5):
     if max_radius <= 0:
         raise ValueError("Invalid max_radius: must be greater than 0.")
 
-    walkable_sets = []
+    walkable_groups = []
     fallback_messages = []
 
     for category in user_categories:
-        idx = binary_search_category(categories, category)
-        if idx != -1:
-            cat_walkable = []
-            for dist, name in zip(local_distances[idx], local_names[idx]):
+        category_index = binary_search_category(categories, category)
+        if category_index != -1:
+            category_matches = []
+            for dist, name in zip(resource_distances[category_index], resource_names[category_index]):
                 if dist < 0:
                     raise ValueError(f"GPS calculation error: negative distance ({dist} mi) for {name}.")
                 if dist <= max_radius:
-                    cat_walkable.append((dist, name))
+                    category_matches.append((dist, name))
 
-            if cat_walkable:
-                walkable_sets.append(cat_walkable)
+            if category_matches:
+                walkable_groups.append(category_matches)
             else:
                 fallback_messages.append(
-                    f"No walkable {category} nearby. Contact: {statewide_fallbacks[idx]}"
+                    f"No walkable {category} nearby. Contact: {statewide_fallbacks[category_index]}"
                 )
 
-    combined_walkable = list(chain(*walkable_sets))
+    combined_walkable = list(chain(*walkable_groups))
     if combined_walkable:
         combined_walkable = bucket_sort_resources(combined_walkable, max_radius)
 
