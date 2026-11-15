@@ -157,7 +157,7 @@ def benchmark_sorts(sizes=(10, 250, 500), max_radius=1.5):
     """Compares execution time of Merge Sort vs. Bucket Sort + Heapsort."""
     random.seed(42)
     for n in sizes:
-        sample = [(random.uniform(0.05, 1.49), f"Facility {i}") for i in range(n)]
+        sample = [(random.uniform(0.05, 1.5), f"Facility {i}") for i in range(n)]
 
         merge_data = sample.copy()
         t0 = time.perf_counter()
