@@ -1,6 +1,6 @@
 """
 ResourcesNow - Location-Based Service (LBS) Proof of Concept
-Phase 2: Data Structures and Application Workflow
+Phase 2: Data Structures, Sorting Algorithms, and Error Handling
 """
 
 from itertools import chain
@@ -74,6 +74,9 @@ def heapsort_resources(arr):
 
 def bucket_sort_resources(arr, max_radius):
     """Groups resources into spatial buckets and sorts each bucket with Heapsort."""
+    if max_radius <= 0:
+        raise ValueError("Invalid max_radius: must be greater than 0 to avoid division by zero.")
+
     n = len(arr)
     if n == 0:
         return arr
@@ -82,8 +85,13 @@ def bucket_sort_resources(arr, max_radius):
 
     for item in arr:
         distance = item[0]
-        # intentional unpatched state to test boundary index error
-        normalized = distance / max_radius
+        if distance < 0:
+            raise ValueError(f"GPS calculation error: negative distance ({distance} mi) detected.")
+        if distance > max_radius:
+            raise ValueError(f"Filter error: distance ({distance} mi) exceeds max_radius ({max_radius} mi).")
+
+        # Add 0.01 buffer so boundary distances (distance == max_radius) stay in [0, 1)
+        normalized = distance / (max_radius + 0.01)
         index = int(n * normalized)
         buckets[index].append(item)
 
@@ -98,14 +106,22 @@ def bucket_sort_resources(arr, max_radius):
 # 4. Main Search and Filter Workflow
 def find_walkable_resources(user_categories, max_radius=1.5):
     """Retrieves, filters, and sorts nearby resources within a walkable radius."""
+    if max_radius <= 0:
+        raise ValueError("Invalid max_radius: must be greater than 0.")
+
     walkable_sets = []
     fallback_messages = []
 
     for category in user_categories:
         idx = binary_search_category(categories, category)
         if idx != -1:
-            paired = zip(local_distances[idx], local_names[idx])
-            cat_walkable = [item for item in paired if item[0] <= max_radius]
+            cat_walkable = []
+            for dist, name in zip(local_distances[idx], local_names[idx]):
+                if dist < 0:
+                    raise ValueError(f"GPS calculation error: negative distance ({dist} mi) for {name}.")
+                if dist <= max_radius:
+                    cat_walkable.append((dist, name))
+
             if cat_walkable:
                 walkable_sets.append(cat_walkable)
             else:
