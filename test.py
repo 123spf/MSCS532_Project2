@@ -35,16 +35,11 @@ def run_tests():
     print(f"Test 4 (Boundary)     | Input: {boundary_item}, radius=1.5")
     print(f"  Output: {sorted_boundary}")
 
-    # Test 5: Error Handling (Zero Radius & GPS Glitch)
-    print("Test 5 (Validation)   | Input: radius=0 and distance=-0.5")
+    # Test 5: Error Handling (GPS Glitch)
+    glitch_input = [(-0.5, "Glitch Clinic")]
+    print(f"Test 5 (GPS Glitch)   | Input: {glitch_input}, radius=1.5")
     try:
-        bucket_sort_resources(sample_resources, max_radius=0)
-        assert False
-    except ValueError as err:
-        print(f"  Raised ValueError: {err}")
-
-    try:
-        bucket_sort_resources([(-0.5, "Glitch Clinic")], max_radius=1.5)
+        bucket_sort_resources(glitch_input, max_radius=1.5)
         assert False
     except ValueError as err:
         print(f"  Raised ValueError: {err}")

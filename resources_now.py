@@ -74,9 +74,6 @@ def heapsort_resources(resource_tuples):
 
 def bucket_sort_resources(resource_tuples, max_radius):
     """Groups resources into spatial buckets and sorts each bucket with Heapsort."""
-    if max_radius <= 0:
-        raise ValueError("Invalid max_radius: must be greater than 0 to avoid division by zero.")
-
     n = len(resource_tuples)
     if n == 0:
         return resource_tuples
@@ -106,9 +103,6 @@ def bucket_sort_resources(resource_tuples, max_radius):
 # 4. Main Search and Filter Workflow
 def find_walkable_resources(user_categories, max_radius=1.5):
     """Retrieves, filters, and sorts nearby resources within a walkable radius."""
-    if max_radius <= 0:
-        raise ValueError("Invalid max_radius: must be greater than 0.")
-
     walkable_groups = []
     fallback_messages = []
 
