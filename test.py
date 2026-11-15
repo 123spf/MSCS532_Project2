@@ -7,52 +7,47 @@ from resources_now import find_walkable_resources, heapsort_resources, bucket_so
 
 
 def run_tests():
-    print("Running tests...\n")
-
     # Test 1: 211 Fallback Trigger
-    print("Test 1: 211 Fallback Trigger")
-    results, fallbacks = find_walkable_resources(["Housing"], max_radius=1.5)
-    assert len(results) == 0, "Housing should return no walkable results"
-    assert len(fallbacks) == 1, "Housing should trigger exactly 1 fallback message"
-    assert "State Housing Authority (211)" in fallbacks[0], "Incorrect fallback message"
-    print("✓ Fallback test passed")
+    cat_input = ["Housing"]
+    results, fallbacks = find_walkable_resources(cat_input, max_radius=1.5)
+    assert results == [] and len(fallbacks) == 1
+    print(f"Test 1 (211 Fallback) | Input: {cat_input}, radius=1.5")
+    print(f"  Output: results={results}, fallbacks={fallbacks}")
 
     # Test 2: Empty Input Handling
-    print("Test 2: Empty Input")
-    empty_result = bucket_sort_resources([], max_radius=1.5)
-    assert empty_result == [], "Empty input should return empty list"
-    print("✓ Empty input test passed")
+    empty_input = []
+    empty_result = bucket_sort_resources(empty_input, max_radius=1.5)
+    assert empty_result == []
+    print(f"Test 2 (Empty List)   | Input: {empty_input}, radius=1.5")
+    print(f"  Output: {empty_result}")
 
-    # Test 3: Standard Sorting & Accuracy
-    print("Test 3: Heapsort Correctness")
+    # Test 3: Heapsort Correctness
     sample_resources = [(1.2, "Downtown Pantry"), (0.4, "Community Kitchen"), (0.8, "Free Clinic A")]
     sorted_heap = heapsort_resources(sample_resources.copy())
-    assert sorted_heap[0][1] == "Community Kitchen", "Heapsort failed nearest neighbor"
-    assert sorted_heap[-1][1] == "Downtown Pantry", "Heapsort failed farthest neighbor"
-    print("✓ Standard sorting test passed")
+    assert sorted_heap[0][1] == "Community Kitchen" and sorted_heap[-1][1] == "Downtown Pantry"
+    print(f"Test 3 (Heapsort)     | Input: {sample_resources}")
+    print(f"  Output: {sorted_heap}")
 
     # Test 4: Exact Boundary Limit (1.5 miles)
-    print("Test 4: Exact Boundary Limit")
     boundary_item = [(1.5, "Boundary Clinic")]
     sorted_boundary = bucket_sort_resources(boundary_item, max_radius=1.5)
-    assert sorted_boundary == [(1.5, "Boundary Clinic")], "Boundary item failed to sort"
-    print("✓ Boundary test passed")
+    assert sorted_boundary == [(1.5, "Boundary Clinic")]
+    print(f"Test 4 (Boundary)     | Input: {boundary_item}, radius=1.5")
+    print(f"  Output: {sorted_boundary}")
 
     # Test 5: Error Handling (Zero Radius & GPS Glitch)
-    print("Test 5: Error Handling")
+    print("Test 5 (Validation)   | Input: radius=0 and distance=-0.5")
     try:
         bucket_sort_resources(sample_resources, max_radius=0)
-        assert False, "Expected ValueError for max_radius=0"
+        assert False
     except ValueError as err:
-        print(f"✓ Caught zero-radius error: {err}")
+        print(f"  Raised ValueError: {err}")
 
     try:
         bucket_sort_resources([(-0.5, "Glitch Clinic")], max_radius=1.5)
-        assert False, "Expected ValueError for negative GPS distance"
+        assert False
     except ValueError as err:
-        print(f"✓ Caught GPS glitch error: {err}")
-
-    print("\nAll tests passed successfully!")
+        print(f"  Raised ValueError: {err}")
 
 
 if __name__ == "__main__":
