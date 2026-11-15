@@ -1,6 +1,9 @@
+"""
+ResourcesNow - Location-Based Service (LBS) Proof of Concept
+Phase 2: Data Structures and Application Workflow
+"""
+
 from itertools import chain
-import random
-import time
 
 # 1. Structure of Arrays (SoA): Parallel lists sorted alphabetically by category
 categories = ["Food Bank", "Housing", "Medical"]
@@ -39,51 +42,14 @@ def binary_search_category(cat_list, target):
     return -1
 
 
-# 3. Phase 1 Baseline: Merge Sort (retained temporarily for benchmarking)
-def merge_sort(arr, low, high):
-    """Recursively divides and sorts resource tuples by distance."""
-    if low >= high:
-        return
-    mid = (low + high) // 2
-    merge_sort(arr, low, mid)
-    merge_sort(arr, mid + 1, high)
-    merge(arr, low, mid, high)
-
-
-def merge(arr, low, mid, high):
-    """Merges two sorted subarrays using O(n) auxiliary lists."""
-    left = arr[low:mid + 1]
-    right = arr[mid + 1:high + 1]
-    i = j = 0
-    k = low
-
-    while i < len(left) and j < len(right):
-        if left[i][0] <= right[j][0]:
-            arr[k] = left[i]
-            i += 1
-        else:
-            arr[k] = right[j]
-            j += 1
-        k += 1
-
-    while i < len(left):
-        arr[k] = left[i]
-        i += 1
-        k += 1
-
-    while j < len(right):
-        arr[k] = right[j]
-        j += 1
-        k += 1
-
-
-# 4. Phase 2 Upgrade: Heapsort + Initial Bucket Sort
+# 3. Phase 2 Upgrade: Heapsort + Bucket Sort
 def max_heapify(arr, n, i):
     """Maintains the max-heap property for paired tuples (distance, name)."""
     largest = i
     left = 2 * i + 1
     right = 2 * i + 2
 
+    # Compare distances (index 0); ties break deterministically by name (index 1)
     if left < n and arr[left] > arr[largest]:
         largest = left
     if right < n and arr[right] > arr[largest]:
@@ -116,6 +82,7 @@ def bucket_sort_resources(arr, max_radius):
 
     for item in arr:
         distance = item[0]
+        # intentional unpatched state to test boundary index error
         normalized = distance / max_radius
         index = int(n * normalized)
         buckets[index].append(item)
@@ -128,7 +95,7 @@ def bucket_sort_resources(arr, max_radius):
     return result
 
 
-# 5. Main Search Workflow & Side-by-Side Benchmark
+# 4. Main Search and Filter Workflow
 def find_walkable_resources(user_categories, max_radius=1.5):
     """Retrieves, filters, and sorts nearby resources within a walkable radius."""
     walkable_sets = []
@@ -153,25 +120,7 @@ def find_walkable_resources(user_categories, max_radius=1.5):
     return combined_walkable, fallback_messages
 
 
-def benchmark_sorts(sizes=(10, 250, 500), max_radius=1.5):
-    """Compares execution time of Merge Sort vs. Bucket Sort + Heapsort."""
-    random.seed(42)
-    for n in sizes:
-        sample = [(random.uniform(0.05, 1.5), f"Facility {i}") for i in range(n)]
-
-        merge_data = sample.copy()
-        t0 = time.perf_counter()
-        merge_sort(merge_data, 0, len(merge_data) - 1)
-        merge_ms = (time.perf_counter() - t0) * 1000
-
-        bucket_data = sample.copy()
-        t1 = time.perf_counter()
-        bucket_sorted = bucket_sort_resources(bucket_data, max_radius)
-        bucket_ms = (time.perf_counter() - t1) * 1000
-
-        assert merge_data == bucket_sorted, "Sort outputs do not match!"
-        print(f"n={n:<4} | Merge Sort: {merge_ms:.4f} ms | Bucket+Heap: {bucket_ms:.4f} ms")
-
-
 if __name__ == "__main__":
-    benchmark_sorts()
+    results, fallbacks = find_walkable_resources(["Food Bank", "Medical"], max_radius=1.5)
+    print("Walkable Resources:", results)
+    print("Fallbacks:", fallbacks)
